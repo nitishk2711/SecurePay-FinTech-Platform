@@ -1,13 +1,13 @@
-package com.example.order_service;
+package com.securepay.eureka_server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class OrderServiceApplication {
+public class SecurePayEurekaServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(OrderServiceApplication.class, args);
+		SpringApplication.run(SecurePayEurekaServerApplication.class, args);
 	}
 
 }

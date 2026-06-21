@@ -1,13 +1,13 @@
-package com.example.paymentService;
+package com.securepay.merchant_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PaymentServiceApplication {
+public class SecurePayMerchantServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PaymentServiceApplication.class, args);
+		SpringApplication.run(SecurePayMerchantServiceApplication.class, args);
 	}
 
 }
