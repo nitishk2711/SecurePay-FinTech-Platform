@@ -1,24 +1,42 @@
 package com.securepay.order_service.entity;
 
-import com.fasterxml.jackson.annotation.JsonTypeId;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.securepay.order_service.enums.OrderStatus;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
-@Document(collection="orders")
+@Entity
+@Table(name = "orders")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Order {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private Long orderId;
-    private Long merchantId;
+
+    @Column(unique = true)
+    private String orderId;
+
+    private String merchantId;
+
+    private String customerId;
+
     private BigDecimal amount;
+
     private String currency;
+
     private String description;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }
