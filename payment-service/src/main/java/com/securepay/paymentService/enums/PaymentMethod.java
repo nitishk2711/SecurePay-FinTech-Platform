@@ -1,10 +1,10 @@
 package com.securepay.paymentService.enums;
 
 public enum PaymentMethod {
-    CREATED,
-    AUTHORIZED,
-    CAPTURED,
-    FAILED,
-    REFUNDED,
-    SETTLED
+    PaymentMethod,
+    CREDIT_CARD,
+    DEBIT_CARD,
+    UPI,
+    NET_BANKING,
+    WALLET
 }
