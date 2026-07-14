@@ -32,7 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setCustomerId(request.getCustomerId());
         payment.setAmount(request.getAmount());
         payment.setMethod(request.getPaymentMethod());
-//        payment.setPayment_id(paymentId.findByPayment_id());
+        payment.setPaymentId(paymentId.generatePaymentId());
         payment.setStatus(CREATED);
 
         PaymentResponse paymentResponse = new PaymentResponse();
@@ -41,20 +41,25 @@ public class PaymentServiceImpl implements PaymentService {
 //        paymentResponse.setMerchantId(request.getMerchantId());
 //        paymentResponse.setCustomerId(request.getCustomerId());
         paymentResponse.setAmount(request.getAmount());
-//        paymentResponse.setPaymentMethod(request.getPaymentMethod());
+        paymentResponse.setPaymentMethod(request.getPaymentMethod());
         paymentResponse.setStatus(CREATED);
-        return payment;
+        return paymentRepository.save(payment);
     }
 
     @Override
-    public Payment refundPayment(String paymentId) {
-        Payment payment = paymentRepository.findByPayment_id(paymentId);
+    public Payment  refundPayment(String paymentId) {
+        Payment payment = paymentRepository.findByPaymentId(paymentId);
         if (payment == null) {
             throw new RuntimeException("Payment not found");
         }
         payment.setStatus(REFUNDED);
         payment.setUpdatedAt(new Date());
         return paymentRepository.save(payment);
+    }
+
+    @Override
+    public List<Payment> getallPayments() {
+        return paymentRepository.findAll();
     }
 //    @Override
 //    public Payment autorizePayment(String id) {

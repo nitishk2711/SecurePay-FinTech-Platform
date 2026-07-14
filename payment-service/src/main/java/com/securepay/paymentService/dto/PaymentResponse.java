@@ -13,4 +13,5 @@ public class PaymentResponse {
     private BigDecimal amount;
     private PaymentStatus status;
     private String processorReference;
+    private PaymentMethod paymentMethod;
 }

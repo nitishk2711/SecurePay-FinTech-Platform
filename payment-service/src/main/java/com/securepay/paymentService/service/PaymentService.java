@@ -16,6 +16,8 @@ public interface PaymentService {
     Payment createPayments(CreatePaymentRequest request);
 
     Payment refundPayment(String PaymentId);
+
+    List<Payment> getallPayments();
 //    Payment autorizePayment(String id);
 //
 //    Payment capturePayment(String id);

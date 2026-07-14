@@ -17,7 +17,7 @@ public class Payment {
     private String id;
 
 
-    private String payment_id;
+    private String paymentId;
     private String orderId;
     private String merchantId;
     private String customerId;
