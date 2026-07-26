@@ -1,0 +1,14 @@
+package com.securepay.paymentService.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.math.BigDecimal;
+
+@Getter
+@AllArgsConstructor
+public class PaymentResponse {
+    private String paymentId;
+    private String status;
+    private BigDecimal amount;
+}

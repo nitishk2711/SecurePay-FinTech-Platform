@@ -1,27 +1,14 @@
 package com.securepay.order_service.service;
 
-import com.securepay.order_service.entity.Order;
-import com.securepay.order_service.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.securepay.order_service.request.CreateOrderRequest;
+import com.securepay.order_service.response.OrderResponse;
 
-import java.util.List;
-import java.util.Optional;
+public interface OrderService {
 
-@Service
-public class OrderService {
-    @Autowired
-    private OrderRepository orderRepository;
+    OrderResponse createOrder(CreateOrderRequest request);
 
-    public Order createOrders(Order order) {
-        return orderRepository.save(order);
-    }
+    OrderResponse getOrder(String orderId);
 
-    public List<Order> getOrders() {
-        return orderRepository.findAll();
-    }
+    void updateStatus(String orderId, String status);
 
-    public Optional<Order> getOrderById(String id) {
-        return orderRepository.findById(id);
-    }
 }

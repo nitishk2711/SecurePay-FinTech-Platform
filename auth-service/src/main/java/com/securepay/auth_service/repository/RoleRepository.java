@@ -1,7 +1,11 @@
 package com.securepay.auth_service.repository;
 
 import com.securepay.auth_service.entity.Role;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RoleRepository extends MongoRepository<Role, String> {
+import java.util.Optional;
+
+public interface RoleRepository extends JpaRepository<Role, Long> {
+
+    Optional<Role> findByName(String name);
 }
