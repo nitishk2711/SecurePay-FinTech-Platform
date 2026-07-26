@@ -1,17 +1,14 @@
 package com.securepay.paymentService.dto;
 
-import com.securepay.paymentService.enums.PaymentMethod;
-import com.securepay.paymentService.enums.PaymentStatus;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@AllArgsConstructor
 public class PaymentResponse {
     private String paymentId;
-    private String orderId;
+    private String status;
     private BigDecimal amount;
-    private PaymentStatus status;
-    private String processorReference;
-    private PaymentMethod paymentMethod;
 }

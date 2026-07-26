@@ -1,15 +1,18 @@
 package com.securepay.auth_service.entity;
 
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.security.SecureRandom;
+@Getter
+@Setter
+@Entity
+@Table(name = "roles")
+public class Role {
 
-@Data
-@Document(collection = "roles")
-public class    Role {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String name;
 }

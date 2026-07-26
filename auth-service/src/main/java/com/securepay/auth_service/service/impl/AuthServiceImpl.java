@@ -1,96 +1,82 @@
 package com.securepay.auth_service.service.impl;
 
-import com.securepay.auth_service.dto.JwtResponse;
 import com.securepay.auth_service.dto.LoginRequest;
+import com.securepay.auth_service.dto.LoginResponse;
+import com.securepay.auth_service.dto.UpdateRoleRequest;
 import com.securepay.auth_service.dto.UserRegisterRequest;
 import com.securepay.auth_service.entity.Role;
 import com.securepay.auth_service.entity.User;
-import com.securepay.auth_service.exception.ResourceNotFoundException;
 import com.securepay.auth_service.repository.RoleRepository;
 import com.securepay.auth_service.repository.UserRepository;
-import com.securepay.auth_service.security.JwtUtil;
+import com.securepay.auth_service.security.JwtService;
 import com.securepay.auth_service.service.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtUtil jwtUtil;
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final RoleRepository roleRepository;
+
 
     @Override
-    public User register(UserRegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
+    public void register(UserRegisterRequest request) {
+
+        Role role = roleRepository.findByName(request.getRoleName().toUpperCase())
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+
         User user = new User();
+
+        user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        return userRepository.save(user);
+        user.setRole(role);
+
+        userRepository.save(user);
 
     }
 
+
     @Override
-    public JwtResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid Credentials");
-        }
-        Role role = roleRepository.findById(user.getRoleId())
+    public LoginResponse login(LoginRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        String token = jwtService.generateToken(user);
+        return new LoginResponse(token);
+    }
+
+    @Override
+    public void updateRole(UpdateRoleRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new RuntimeException("Role not found"));
-        String token = jwtUtil.generateToken(user.getEmail(), role.getName());
-        return new JwtResponse(token);
-    }
 
+        user.setRole(role);
 
-    @Override
-    public Role createRoles(Role role) {
-        return roleRepository.save(role);
+        userRepository.save(user);
     }
 
     @Override
-    public Role getRoleId(String id) {
-        return roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
+    public void createRole(Role request) {
+
+        roleRepository.findByName(request.getName())
+                .ifPresent(role -> {
+                    throw new RuntimeException("Role already exists");
+                });
+
+        Role role = new Role();
+        role.setName(request.getName().toUpperCase());
+
+        roleRepository.save(role);
     }
 
-    @Override
-    public Role updateRole(String id, Role role) {
-        Role updaterole = roleRepository.findById(id).orElseThrow(() -> new RuntimeException("Role not found with Role id: " + id));
-        updaterole.setId(role.getId());
-        updaterole.setName(role.getName());
-        return roleRepository.save(updaterole);
-    }
 
-    @Override
-    public String deleteRole(String id) {
-        if (!roleRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with role id:" + id);
-        }
-        roleRepository.deleteById(id);
-        return "Role with id:"+id +"is deleted";
-    }
-
-    @Override
-    public User updateRoleId(String userId,String roleId){
-        User user=userRepository.findById(userId).orElseThrow(()->new RuntimeException("User not found"));
-        user.setRoleId(roleId);
-        return userRepository.save(user);
-    }
 }
-//post
-//user register
-//login->generate Token
-
-
-
-

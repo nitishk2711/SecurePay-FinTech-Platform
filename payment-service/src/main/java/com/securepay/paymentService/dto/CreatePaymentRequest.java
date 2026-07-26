@@ -1,16 +1,28 @@
 package com.securepay.paymentService.dto;
 
-import com.securepay.paymentService.enums.PaymentMethod;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 public class CreatePaymentRequest {
+
+    @NotBlank
     private String orderId;
+
+    @NotBlank
     private String merchantId;
+
+    @NotBlank
     private String customerId;
+
+    @NotNull
     private BigDecimal amount;
+
     private String currency;
-    private PaymentMethod paymentMethod;
+    private String method;
 }
