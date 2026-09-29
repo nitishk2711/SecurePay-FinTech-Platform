@@ -19,11 +19,10 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
         </processorPath>
         <module name="merchant-service" />
-        <module name="config-server" />
-        <module name="payment-service" />
         <module name="account-service" />
+        <module name="payment-service" />
       </profile>
-      <profile name="Annotation profile for audit-service" enabled="true">
+      <profile name="Annotation profile for transaction-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -31,6 +30,7 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
         <module name="fraud-service" />
+        <module name="config-server" />
         <module name="audit-service" />
         <module name="ledger-service" />
         <module name="transaction-service" />
