@@ -1,3 +1,4 @@
+```java
 package com.securepay.auth_service.controller;
 
 import com.securepay.auth_service.dto.*;
@@ -20,93 +21,236 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> register(
             @Valid @RequestBody UserRegisterRequest request) {
+        try {
+            authService.register(request);
 
-        authService.register(request);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Registration received. Verify your email to activate the account.",
+                            null
+                    )
+            );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of(
-                        "message",
-                        "Registration received. Verify your email to activate the account."
-                ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Internal Server Error",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
+    public ResponseEntity<ApiResponseDto<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request) {
+        try {
+            LoginResponse response = authService.login(request);
 
-        return ResponseEntity.ok(authService.login(request));
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Success",
+                            response
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            "Login failed",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refresh(
+    public ResponseEntity<ApiResponseDto<LoginResponse>> refresh(
             @Valid @RequestBody RefreshRequest request) {
+        try {
+            LoginResponse response = authService.refresh(request);
 
-        return ResponseEntity.ok(authService.refresh(request));
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Success",
+                            response
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            "Invalid or expired refresh token",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> logout(
             @Valid @RequestBody RefreshRequest request) {
+        try {
+            authService.logout(request.refreshToken());
 
-        authService.logout(request.refreshToken());
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Logged out",
+                            null
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("message", "Logged out"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Logout failed",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            authService.changePassword(
+                    authentication.getName(),
+                    request
+            );
 
-        authService.changePassword(
-                authentication.getName(), request);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Password changed",
+                            null
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("message", "Password changed"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Password change failed",
+                            null
+                    )
+            );
+        }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(Authentication authentication) {
+    public ResponseEntity<ApiResponseDto<Map<String, UUID>>> me(
+            Authentication authentication) {
+        try {
+            UUID userId = authService.getCurrentUserId(
+                    authentication.getName()
+            );
 
-        UUID userId = authService.getCurrentUserId(
-                authentication.getName());
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Success",
+                            Map.of("userId", userId)
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("userId", userId));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            "Unauthorized",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> verifyEmail(
             @RequestParam String token) {
+        try {
+            authService.verifyEmail(token);
 
-        authService.verifyEmail(token);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Email verified",
+                            null
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("message", "Email verified"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Email verification failed",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> forgotPassword(
             @RequestParam String email) {
+        try {
+            authService.forgotPassword(email);
 
-        authService.forgotPassword(email);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "If an account exists, reset instructions will be sent.",
+                            null
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("message",
-                        "If an account exists, reset instructions will be sent."));
+        } catch (Exception e) {
+            // Avoid revealing whether an email exists.
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "If an account exists, reset instructions will be sent.",
+                            null
+                    )
+            );
+        }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> resetPassword(
             @RequestParam String token,
             @RequestParam String newPassword) {
+        try {
+            authService.resetPassword(token, newPassword);
 
-        authService.resetPassword(token, newPassword);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Password reset",
+                            null
+                    )
+            );
 
-        return ResponseEntity.ok(
-                Map.of("message", "Password reset"));
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            "Password reset failed",
+                            null
+                    )
+            );
+        }
     }
 }
+```
