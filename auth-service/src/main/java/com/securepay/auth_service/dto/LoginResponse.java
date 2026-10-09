@@ -1,12 +1,14 @@
 package com.securepay.auth_service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.UUID;
 
-@Getter
-@AllArgsConstructor
-public class LoginResponse {
-
-    private String accessToken;
-
+public record LoginResponse(
+        String accessToken,
+        String refreshToken,
+        String tokenType,
+        long expiresIn,
+        UUID userId,
+        String username,
+        String role
+) {
 }
