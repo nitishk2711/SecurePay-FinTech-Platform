@@ -1,11 +1,14 @@
+```java
 package com.securepay.auth_service.controller;
 
+import com.securepay.auth_service.dto.ApiResponseDto;
 import com.securepay.auth_service.dto.UpdateRoleRequest;
 import com.securepay.auth_service.entity.Role;
 import com.securepay.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,21 +23,53 @@ public class RoleController {
     private final AuthService authService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, String> createRole(
-            @RequestBody Role role) {
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> createRole(
+            @Valid @RequestBody Role role) {
+        try {
+            authService.createRole(role);
 
-        authService.createRole(role);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Role created",
+                            null
+                    )
+            );
 
-        return Map.of("message", "Role created");
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to create role",
+                            null
+                    )
+            );
+        }
     }
 
     @PutMapping("/assign")
-    public Map<String, String> updateRole(
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> updateRole(
             @Valid @RequestBody UpdateRoleRequest request) {
+        try {
+            authService.updateRole(request);
 
-        authService.updateRole(request);
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "Role assigned",
+                            null
+                    )
+            );
 
-        return Map.of("message", "Role assigned");
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "Failed to assign role",
+                            null
+                    )
+            );
+        }
     }
 }
+```
