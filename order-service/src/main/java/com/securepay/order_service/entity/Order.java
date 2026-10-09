@@ -1,4 +1,3 @@
-```java
 package com.securepay.order_service.entity;
 
 import com.securepay.order_service.enums.OrderStatus;
@@ -87,4 +86,3 @@ public class Order {
         updatedAt = Instant.now();
     }
 }
-```
