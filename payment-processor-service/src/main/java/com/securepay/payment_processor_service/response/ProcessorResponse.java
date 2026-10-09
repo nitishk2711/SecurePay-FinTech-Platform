@@ -1,20 +1,36 @@
+
 package com.securepay.payment_processor_service.response;
 
+import com.securepay.payment_processor_service.enums.ProcessorStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import lombok.*;
+import java.math.BigDecimal;
+import java.util.UUID;
 
-
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class ProcessorResponse {
 
-    private String paymentId;
+    private UUID paymentId;
 
-    private String status;
+    private UUID processorTransactionId;
+
+    private String externalTransactionId;
+
+    private String processorName;
+
+    private BigDecimal amount;
+
+    private String currency;
+
+    private ProcessorStatus status;
+
+    private String responseCode;
 
     private String message;
-
-
 }
