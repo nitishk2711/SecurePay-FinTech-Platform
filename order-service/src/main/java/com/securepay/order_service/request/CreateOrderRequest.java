@@ -1,23 +1,40 @@
 package com.securepay.order_service.request;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-import org.antlr.v4.runtime.misc.NotNull;
+import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 public class CreateOrderRequest {
 
-    @NotBlank
+    @NotBlank(message = "Merchant ID is required")
     private String merchantId;
 
-    @NotBlank
     private String customerId;
 
-    @NotNull
+    @NotNull(message = "Amount is required")
+    @DecimalMin(
+        value = "0.0",
+        inclusive = false,
+        message = "Amount must be greater than zero"
+    )
+    @Digits(
+        integer = 15,
+        fraction = 4,
+        message = "Invalid amount precision"
+    )
     private BigDecimal amount;
 
+    @NotBlank(message = "Currency is required")
+    @Pattern(
+        regexp = "^[A-Z]{3}$",
+        message = "Currency must be a three-letter uppercase code"
+    )
     private String currency;
 
+    @Size(max = 255, message = "Description is too long")
+    private String description;
 }
