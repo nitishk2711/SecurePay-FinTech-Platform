@@ -1,6 +1,7 @@
 package com.securepay.auth_service.security;
 
-import io.jsonwebtoken.Claims;
+import com.securepay.auth_service.entity.User;
+import com.securepay.auth_service.repository.UserRepository;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -9,22 +10,21 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication
         .UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication
-        .WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -40,44 +40,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = header.substring(7);
-
         try {
-            Claims claims = jwtService.parseToken(token);
+            String token = header.substring(7);
+            UUID userId = jwtService.extractUserId(token);
 
-            String userId = claims.getSubject();
+            User user = userRepository.findById(userId)
+                    .orElseThrow(IllegalArgumentException::new);
 
-            // Resolve current user from the database rather than
-            // trusting role claims indefinitely.
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(
-                            findEmailForSubject(userId));
+            boolean locked = user.getLockedUntil() != null
+                    && user.getLockedUntil().isAfter(
+                            java.time.Instant.now());
 
-            if (SecurityContextHolder.getContext()
-                    .getAuthentication() == null) {
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities());
-
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
-
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+            if (user.getStatus()
+                    != com.securepay.auth_service.entity.UserStatus.ACTIVE
+                    || !user.isEmailVerified()
+                    || locked) {
+                response.sendError(
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        "Account is not available");
+                return;
             }
 
+            List<SimpleGrantedAuthority> authorities =
+                    new ArrayList<>();
+
+            authorities.add(new SimpleGrantedAuthority(
+                    "ROLE_" + user.getRole().getName()));
+
+            user.getRole().getPermissions().forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(
+                            permission.getName())));
+
+            var authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            user.getEmail(),
+                            null,
+                            authorities);
+
+            SecurityContextHolder.getContext()
+                    .setAuthentication(authentication);
+
         } catch (JwtException | IllegalArgumentException ex) {
-            SecurityContextHolder.clearContext();
-            response.sendError(
-                    HttpServletResponse.SC_UNAUTHORIZED,
-                    "Invalid or expired access token");
-            return;
-        } catch (org.springframework.security.core.userdetails
-                 .UsernameNotFoundException ex) {
             SecurityContextHolder.clearContext();
             response.sendError(
                     HttpServletResponse.SC_UNAUTHORIZED,
@@ -86,12 +89,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
-    }
-
-    private String findEmailForSubject(String userId) {
-        // Implemented through the user repository in the
-        // corrected constructor-based version below.
-        throw new UnsupportedOperationException(
-                "Inject UserRepository and look up the UUID");
     }
 }
