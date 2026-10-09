@@ -4,6 +4,7 @@ import com.securepay.auth_service.dto.*;
 import com.securepay.auth_service.entity.Role;
 import com.securepay.auth_service.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,8 +36,11 @@ public class AuthController {
 
     @PostMapping("/roles")
     public ResponseEntity<ApiResponseDto<Object>> createRole(@RequestBody Role request) {
-
+        try {
         authService.createRole(request);
         return ResponseEntity.ok(new ApiResponseDto<>(1, "Role created successfully", null));
+    }catch(Exception e){
+            e.printStackTrace(); return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) .body(new ApiResponseDto<>( 500, e.getMessage(), null ));
+        }
     }
 }

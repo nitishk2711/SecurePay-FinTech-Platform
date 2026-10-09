@@ -6,7 +6,6 @@ import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Configuration
 public class GatewayRoutesConfig {
 
@@ -15,105 +14,98 @@ public class GatewayRoutesConfig {
         return builder.routes()
 
                 // =====================================================
-                // AUTH SERVICE
+                // AUTH SERVICE API
                 // =====================================================
                 .route("auth-service", r ->
-                        r.path("/api/auth/**")
-                                .uri("lb://auth-service"))
+                        r.path("/auth-service/**")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://AUTH-SERVICE"))
 
                 // =====================================================
-                // MERCHANT SERVICE
+                // MERCHANT SERVICE API
                 // =====================================================
                 .route("merchant-service", r ->
                         r.path("/api/merchant/**")
                                 .uri("lb://SECURE-PAY-MERCHANT-SERVICE"))
 
                 // =====================================================
-                // PAYMENT SERVICE
+                // PAYMENT SERVICE API
                 // =====================================================
                 .route("payment-service", r ->
                         r.path("/api/payment/**")
-                                .uri("lb://payment-service"))
+                                .uri("lb://PAYMENT-SERVICE"))
 
                 // =====================================================
-                // ACCOUNT SERVICE SWAGGER
+                // ACCOUNT SERVICE API
                 // =====================================================
-                .route("account-service-swagger", r ->
-                        r.path("/account-service/v3/api-docs")
+                .route("account-service", r ->
+                        r.path("/account-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://account-service"))
+                                .uri("lb://ACCOUNT-SERVICE"))
 
                 // =====================================================
-                // PAYMENT PROCESSOR SERVICE SWAGGER
+                // PAYMENT PROCESSOR API
                 // =====================================================
-                .route("payment-processor-service-swagger", r ->
-                        r.path("/payment-processor-service/v3/api-docs")
+                .route("payment-processor-service", r ->
+                        r.path("/payment-processor-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://payment-processor-service"))
+                                .uri("lb://PAYMENT-PROCESSOR-SERVICE"))
 
                 // =====================================================
-                // LEDGER SERVICE SWAGGER
+                // LEDGER SERVICE API
                 // =====================================================
-                .route("ledger-service-swagger", r ->
-                        r.path("/ledger-service/v3/api-docs")
+                .route("ledger-service", r ->
+                        r.path("/ledger-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://ledger-service"))
+                                .uri("lb://LEDGER-SERVICE"))
 
                 // =====================================================
-                // ORDER SERVICE SWAGGER
+                // ORDER SERVICE API
                 // =====================================================
-                .route("order-service-swagger", r ->
-                        r.path("/order-service/v3/api-docs")
+                .route("order-service", r ->
+                        r.path("/order-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://order-service"))
+                                .uri("lb://ORDER-SERVICE"))
 
                 // =====================================================
-                // PAYMENT SERVICE SWAGGER
+                // TRANSACTION SERVICE API
                 // =====================================================
-                .route("payment-service-swagger", r ->
-                        r.path("/payment-service/v3/api-docs")
+                .route("transaction-service", r ->
+                        r.path("/transaction-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://payment-service"))
+                                .uri("lb://TRANSACTION-SERVICE"))
 
                 // =====================================================
-                // TRANSACTION SERVICE SWAGGER
+                // SETTLEMENT SERVICE API
                 // =====================================================
-                .route("transaction-service-swagger", r ->
-                        r.path("/transaction-service/v3/api-docs")
+                .route("settlement-service", r ->
+                        r.path("/settlement-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://transaction-service"))
+                                .uri("lb://SETTLEMENT-SERVICE"))
 
                 // =====================================================
-                // SETTLEMENT SERVICE SWAGGER
+                // FRAUD SERVICE API
                 // =====================================================
-                .route("settlement-service-swagger", r ->
-                        r.path("/settlement-service/v3/api-docs")
+                .route("fraud-service", r ->
+                        r.path("/fraud-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://settlement-service"))
+                                .uri("lb://FRAUD-SERVICE"))
 
                 // =====================================================
-                // FRAUD SERVICE SWAGGER
+                // NOTIFICATION SERVICE API
                 // =====================================================
-                .route("fraud-service-swagger", r ->
-                        r.path("/fraud-service/v3/api-docs")
+                .route("notification-service", r ->
+                        r.path("/notification-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://fraud-service"))
+                                .uri("lb://NOTIFICATION-SERVICE"))
 
                 // =====================================================
-                // NOTIFICATION SERVICE SWAGGER
+                // AUDIT SERVICE API
                 // =====================================================
-                .route("notification-service-swagger", r ->
-                        r.path("/notification-service/v3/api-docs")
+                .route("audit-service", r ->
+                        r.path("/audit-service/**")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://notification-service"))
-
-                // =====================================================
-                // AUDIT SERVICE SWAGGER
-                // =====================================================
-                .route("audit-service-swagger", r ->
-                        r.path("/audit-service/v3/api-docs")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://audit-service"))
+                                .uri("lb://AUDIT-SERVICE"))
 
                 // =====================================================
                 // MERCHANT SERVICE SWAGGER
@@ -122,15 +114,95 @@ public class GatewayRoutesConfig {
                         r.path("/secure-pay-merchant-service/v3/api-docs")
                                 .filters(f -> f.stripPrefix(1))
                                 .uri("lb://SECURE-PAY-MERCHANT-SERVICE"))
+
                 // =====================================================
                 // AUTH SERVICE SWAGGER
                 // =====================================================
                 .route("auth-service-swagger", r ->
                         r.path("/auth-service/v3/api-docs")
                                 .filters(f -> f.stripPrefix(1))
-                                .uri("lb://auth-service"))
+                                .uri("lb://AUTH-SERVICE"))
+
+                // =====================================================
+                // ACCOUNT SERVICE SWAGGER
+                // =====================================================
+                .route("account-service-swagger", r ->
+                        r.path("/account-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://ACCOUNT-SERVICE"))
+
+                // =====================================================
+                // PAYMENT PROCESSOR SWAGGER
+                // =====================================================
+                .route("payment-processor-service-swagger", r ->
+                        r.path("/payment-processor-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://PAYMENT-PROCESSOR-SERVICE"))
+
+                // =====================================================
+                // LEDGER SWAGGER
+                // =====================================================
+                .route("ledger-service-swagger", r ->
+                        r.path("/ledger-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://LEDGER-SERVICE"))
+
+                // =====================================================
+                // ORDER SWAGGER
+                // =====================================================
+                .route("order-service-swagger", r ->
+                        r.path("/order-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://ORDER-SERVICE"))
+
+                // =====================================================
+                // PAYMENT SWAGGER
+                // =====================================================
+                .route("payment-service-swagger", r ->
+                        r.path("/payment-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://PAYMENT-SERVICE"))
+
+                // =====================================================
+                // TRANSACTION SWAGGER
+                // =====================================================
+                .route("transaction-service-swagger", r ->
+                        r.path("/transaction-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://TRANSACTION-SERVICE"))
+
+                // =====================================================
+                // SETTLEMENT SWAGGER
+                // =====================================================
+                .route("settlement-service-swagger", r ->
+                        r.path("/settlement-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://SETTLEMENT-SERVICE"))
+
+                // =====================================================
+                // FRAUD SWAGGER
+                // =====================================================
+                .route("fraud-service-swagger", r ->
+                        r.path("/fraud-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://FRAUD-SERVICE"))
+
+                // =====================================================
+                // NOTIFICATION SWAGGER
+                // =====================================================
+                .route("notification-service-swagger", r ->
+                        r.path("/notification-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://NOTIFICATION-SERVICE"))
+
+                // =====================================================
+                // AUDIT SWAGGER
+                // =====================================================
+                .route("audit-service-swagger", r ->
+                        r.path("/audit-service/v3/api-docs")
+                                .filters(f -> f.stripPrefix(1))
+                                .uri("lb://AUDIT-SERVICE"))
 
                 .build();
     }
-
 }
