@@ -1,14 +1,20 @@
+
 package com.securepay.paymentService.repository;
 
 import com.securepay.paymentService.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
+public interface PaymentRepository
+        extends JpaRepository<Payment, String> {
 
-    Optional<Payment> findByPaymentId(String paymentId);
+    Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 
+    List<Payment> findByMerchantIdOrderByCreatedAtDesc(
+            String merchantId
+    );
+
+    List<Payment> findByOrderId(String orderId);
 }
