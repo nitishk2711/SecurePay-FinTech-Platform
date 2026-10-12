@@ -1,10 +1,17 @@
+
 package com.securepay.paymentService.enums;
 
 public enum PaymentStatus {
     CREATED,
+    PROCESSING,
     AUTHORIZED,
     CAPTURED,
     FAILED,
+    PENDING,
+    CANCELLED,
+    REFUND_REQUESTED,
+    PARTIALLY_REFUNDED,
     REFUNDED,
-    SETTLED
+    REFUND_FAILED,
+    EXPIRED
 }
