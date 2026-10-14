@@ -1,3 +1,4 @@
+
 package com.securepay.settlement_service.service;
 
 import com.securepay.settlement_service.dto.CreateSettlementRequest;
@@ -8,10 +9,13 @@ import java.util.List;
 
 public interface SettlementService {
 
-    SettlementResponse createSettlement(CreateSettlementRequest request);
+    SettlementResponse createSettlement(
+        CreateSettlementRequest request
+    );
 
     SettlementResponse processSettlement(String settlementId);
 
-    List<Settlement> getMerchantSettlements(String merchantId);
+    SettlementResponse getSettlement(String settlementId);
 
+    List<Settlement> getMerchantSettlements(String merchantId);
 }
