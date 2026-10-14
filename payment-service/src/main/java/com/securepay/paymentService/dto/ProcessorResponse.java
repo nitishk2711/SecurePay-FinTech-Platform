@@ -1,20 +1,10 @@
+
 package com.securepay.paymentService.dto;
 
-
-import lombok.*;
-
-
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class ProcessorResponse {
-
-    private String paymentId;
-
-    private String status;
-
-    private String message;
-
-
+public record ProcessorResponse(
+        String transactionId,
+        String status,
+        String failureCode,
+        String message
+) {
 }

@@ -1,7 +1,7 @@
+
 package com.securepay.paymentService.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,8 +21,14 @@ public class CreatePaymentRequest {
     private String customerId;
 
     @NotNull
+    @DecimalMin(value = "0.01")
+    @Digits(integer = 15, fraction = 4)
     private BigDecimal amount;
 
+    @NotBlank
+    @Pattern(regexp = "^[A-Z]{3}$")
     private String currency;
+
+    @NotBlank
     private String method;
 }

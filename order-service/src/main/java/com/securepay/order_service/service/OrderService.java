@@ -9,6 +9,8 @@ public interface OrderService {
 
     OrderResponse getOrder(String orderId);
 
-    void updateStatus(String orderId, String status);
-
+    OrderResponse transitionStatus(
+        String orderId,
+        String nextStatus
+    );
 }
