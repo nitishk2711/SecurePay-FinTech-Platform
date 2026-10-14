@@ -1,20 +1,10 @@
 package com.securepay.merchant_service.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.securepay.merchant_service.enums.MerchantStatus;
 
-@Getter
-@Setter
-@AllArgsConstructor
-public class MerchantResponse {
-
-    private String merchantId;
-
-    private String apiKey;
-
-    private String secretKey;
-
-    private String status;
-
-}
+public record MerchantResponse(
+        String merchantId,
+        String apiKey,
+        String secretKey,
+        MerchantStatus status
+) {}
