@@ -19,7 +19,7 @@ public interface AuthService {
             String email,
             ChangePasswordRequest request);
 
-    void updateRole(UpdateRoleRequest request);
+//    void updateRole(UpdateRoleRequest request);
 
     void createRole(Role request);
 

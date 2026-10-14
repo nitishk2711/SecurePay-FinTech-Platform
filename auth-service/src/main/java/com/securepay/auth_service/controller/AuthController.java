@@ -1,4 +1,4 @@
-```java
+
 package com.securepay.auth_service.controller;
 
 import com.securepay.auth_service.dto.*;
@@ -253,4 +253,4 @@ public class AuthController {
         }
     }
 }
-```
+

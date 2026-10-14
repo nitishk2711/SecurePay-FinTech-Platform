@@ -253,23 +253,23 @@ public class AuthServiceImpl implements AuthService {
         return email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
-    @Override
-    @Transactional
-    public void updateRole(UpdateRoleRequest request) {
-
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
-
-        Role role = roleRepository.findById(request.roleId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Role not found"));
-
-        user.setRole(role);
-        userRepository.save(user);
-
-        // TODO: Publish a security audit event.
-    }
+//    @Override
+//    @Transactional
+//    public void updateRole(UpdateRoleRequest request) {
+//
+//        User user = userRepository.findById(request.userId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("User not found"));
+//
+//        Role role = roleRepository.findById(request.roleId())
+//                .orElseThrow(() ->
+//                        new IllegalArgumentException("Role not found"));
+//
+//        user.setRole(role);
+//        userRepository.save(user);
+//
+//        // TODO: Publish a security audit event.
+//    }
 
     @Override
     @Transactional

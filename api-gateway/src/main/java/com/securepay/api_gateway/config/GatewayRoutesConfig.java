@@ -16,9 +16,9 @@ public class GatewayRoutesConfig {
                 // =====================================================
                 // AUTH SERVICE API
                 // =====================================================
+
                 .route("auth-service", r ->
-                        r.path("/auth-service/**")
-                                .filters(f -> f.stripPrefix(1))
+                        r.path("/auth/**")
                                 .uri("lb://AUTH-SERVICE"))
 
                 // =====================================================

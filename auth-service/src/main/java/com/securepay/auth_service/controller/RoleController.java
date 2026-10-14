@@ -1,4 +1,4 @@
-```java
+
 package com.securepay.auth_service.controller;
 
 import com.securepay.auth_service.dto.ApiResponseDto;
@@ -47,29 +47,28 @@ public class RoleController {
         }
     }
 
-    @PutMapping("/assign")
-    public ResponseEntity<ApiResponseDto<Map<String, String>>> updateRole(
-            @Valid @RequestBody UpdateRoleRequest request) {
-        try {
-            authService.updateRole(request);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Role assigned",
-                            null
-                    )
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to assign role",
-                            null
-                    )
-            );
-        }
-    }
+//    @PutMapping("/assign")
+//    public ResponseEntity<ApiResponseDto<Map<String, String>>> updateRole(
+//            @Valid @RequestBody UpdateRoleRequest request) {
+//        try {
+//            authService.updateRole(request);
+//
+//            return ResponseEntity.ok(
+//                    new ApiResponseDto<>(
+//                            HttpStatus.OK.value(),
+//                            "Role assigned",
+//                            null
+//                    )
+//            );
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.ok(
+//                    new ApiResponseDto<>(
+//                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                            "Failed to assign role",
+//                            null
+//                    )
+//            );
+//        }
+//    }
 }
-```

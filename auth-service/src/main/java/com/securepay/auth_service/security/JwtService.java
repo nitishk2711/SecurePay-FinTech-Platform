@@ -20,7 +20,8 @@ public class JwtService {
     private final String issuer;
 
     public JwtService(
-            @Value("${securepay.jwt.secret}") String secret,
+            @Value("${securepay.jwt.secret}")
+            String secret,
             @Value("${securepay.jwt.access-token-minutes:15}")
             long accessTokenMinutes,
             @Value("${securepay.jwt.issuer:securepay-auth}")
