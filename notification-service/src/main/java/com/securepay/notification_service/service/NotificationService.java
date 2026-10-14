@@ -1,13 +1,19 @@
+
 package com.securepay.notification_service.service;
 
 import com.securepay.notification_service.dto.NotificationEvent;
-import com.securepay.notification_service.entity.Notification;
-
-import java.util.List;
+import com.securepay.notification_service.dto.NotificationResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface NotificationService {
 
-    void sendNotification(NotificationEvent event);
+    NotificationResponse sendNotification(
+            NotificationEvent event
+    );
 
-    List<Notification> history(String userId);
+    Page<NotificationResponse> history(
+            String userId,
+            Pageable pageable
+    );
 }
