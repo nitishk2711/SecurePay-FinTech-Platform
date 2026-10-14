@@ -1,6 +1,13 @@
+
 package com.securepay.notification_service.provider;
 
-public interface EmailProvider {
-    void sendEmail(String message);
+import com.securepay.notification_service.dto.ProviderResponse;
 
+public interface EmailProvider {
+
+    ProviderResponse sendEmail(
+            String recipient,
+            String subject,
+            String message
+    );
 }
