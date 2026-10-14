@@ -1,6 +1,13 @@
+
 package com.securepay.notification_service.provider;
 
-public interface PushProvider {
-    void sendPush(String message);
+import com.securepay.notification_service.dto.ProviderResponse;
 
+public interface PushProvider {
+
+    ProviderResponse sendPush(
+            String deviceToken,
+            String title,
+            String message
+    );
 }
