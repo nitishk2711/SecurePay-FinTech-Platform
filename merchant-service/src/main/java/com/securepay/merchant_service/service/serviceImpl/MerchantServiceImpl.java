@@ -1,155 +1,203 @@
+package com.securepay.merchant_service.service.serviceImpl;
 
-package com.securepay.merchant_service.controller;
-
-import com.securepay.merchant_service.dto.ApiResponseDto;
+import com.securepay.merchant_service.component.ApiKeyGenerator;
+import com.securepay.merchant_service.entity.ApiKey;
+import com.securepay.merchant_service.entity.Merchant;
+import com.securepay.merchant_service.enums.ApiKeyStatus;
+import com.securepay.merchant_service.enums.Environment;
 import com.securepay.merchant_service.enums.MerchantStatus;
+import com.securepay.merchant_service.exception.MerchantAlreadyExistsException;
+import com.securepay.merchant_service.exception.MerchantNotFoundException;
+import com.securepay.merchant_service.repository.ApiKeyRepository;
+import com.securepay.merchant_service.repository.MerchantRepository;
 import com.securepay.merchant_service.request.MerchantRequest;
 import com.securepay.merchant_service.request.UpdateMerchantRequest;
 import com.securepay.merchant_service.response.MerchantResponse;
 import com.securepay.merchant_service.service.MerchantService;
-
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.UUID;
 
-@RestController
-@RequestMapping("/api/merchants")
+@Service
 @RequiredArgsConstructor
-public class MerchantController {
+public class MerchantServiceImpl implements MerchantService {
 
-    private final MerchantService merchantService;
+    private final MerchantRepository merchantRepository;
+    private final ApiKeyRepository apiKeyRepository;
+    private final ApiKeyGenerator generator;
+    private final PasswordEncoder passwordEncoder;
 
-    @PostMapping
-    public ResponseEntity<ApiResponseDto<MerchantResponse>> onboard(
-            @Valid @RequestBody MerchantRequest request) {
-        try {
-            MerchantResponse response = merchantService.onboard(request);
+    @Override
+    @Transactional
+    public MerchantResponse onboard(MerchantRequest request) {
 
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.CREATED.value(),
-                            "Merchant onboarded successfully",
-                            response
-                    )
-            );
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
 
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to onboard merchant",
-                            null
-                    )
-            );
+        if (merchantRepository.existsByEmailIgnoreCase(email)) {
+            throw new MerchantAlreadyExistsException(email);
         }
+
+        Merchant merchant = new Merchant();
+
+        merchant.setMerchantId(
+                "MID" + UUID.randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        .substring(0, 12)
+                        .toUpperCase(Locale.ROOT)
+        );
+
+        merchant.setBusinessName(request.getBusinessName().trim());
+        merchant.setEmail(email);
+        merchant.setPhone(request.getPhone().trim());
+
+        // Demo configuration only.
+        // Production onboarding should normally begin as PENDING.
+        merchant.setStatus(MerchantStatus.ACTIVE);
+
+        merchantRepository.saveAndFlush(merchant);
+
+        String apiKeyValue = generator.generateApiKey();
+        String secretValue = generator.generateSecretKey();
+
+        ApiKey key = new ApiKey();
+        key.setMerchant(merchant);
+        key.setApiKey(apiKeyValue);
+        key.setSecretHash(passwordEncoder.encode(secretValue));
+        key.setEnvironment(Environment.TEST);
+        key.setStatus(ApiKeyStatus.ACTIVE);
+
+        apiKeyRepository.save(key);
+
+        // Return the plaintext secret only once.
+        return new MerchantResponse(
+                merchant.getMerchantId(),
+                apiKeyValue,
+                secretValue,
+                merchant.getStatus()
+        );
     }
 
-    @GetMapping("/{merchantId}")
-    public ResponseEntity<ApiResponseDto<MerchantResponse>> getMerchant(
-            @PathVariable String merchantId) {
-        try {
-            MerchantResponse response =
-                    merchantService.getMerchant(merchantId);
+    @Override
+    @Transactional(readOnly = true)
+    public MerchantResponse getMerchant(String merchantId) {
 
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Success",
-                            response
-                    )
-            );
+        Merchant merchant = findMerchant(merchantId);
 
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to retrieve merchant",
-                            null
-                    )
-            );
-        }
+        // Never expose API secrets through merchant retrieval.
+        return new MerchantResponse(
+                merchant.getMerchantId(),
+                null,
+                null,
+                merchant.getStatus()
+        );
     }
 
-    @PutMapping("/{merchantId}")
-    public ResponseEntity<ApiResponseDto<MerchantResponse>> updateMerchant(
-            @PathVariable String merchantId,
-            @Valid @RequestBody UpdateMerchantRequest request) {
-        try {
-            MerchantResponse response =
-                    merchantService.updateMerchant(merchantId, request);
+    @Override
+    @Transactional
+    public MerchantResponse updateMerchant(
+            String merchantId,
+            UpdateMerchantRequest request) {
 
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Merchant updated successfully",
-                            response
-                    )
-            );
+        Merchant merchant = findMerchant(merchantId);
 
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to update merchant",
-                            null
-                    )
-            );
+        String email = request.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        boolean emailUsedByAnotherMerchant =
+                merchantRepository.existsByEmailIgnoreCase(email)
+                && !merchant.getEmail().equalsIgnoreCase(email);
+
+        if (emailUsedByAnotherMerchant) {
+            throw new MerchantAlreadyExistsException(email);
         }
+
+        merchant.setBusinessName(request.getBusinessName().trim());
+        merchant.setEmail(email);
+        merchant.setPhone(request.getPhone().trim());
+
+        merchantRepository.save(merchant);
+
+        return new MerchantResponse(
+                merchant.getMerchantId(),
+                null,
+                null,
+                merchant.getStatus()
+        );
     }
 
-    @PatchMapping("/{merchantId}/status")
-    public ResponseEntity<ApiResponseDto<MerchantResponse>> updateStatus(
-            @PathVariable String merchantId,
-            @RequestParam MerchantStatus status) {
-        try {
-            MerchantResponse response =
-                    merchantService.updateStatus(merchantId, status);
+    @Override
+    @Transactional
+    public MerchantResponse updateStatus(
+            String merchantId,
+            MerchantStatus status) {
 
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Merchant status updated successfully",
-                            response
-                    )
-            );
+        Merchant merchant = findMerchant(merchantId);
 
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to update merchant status",
-                            null
-                    )
-            );
-        }
+        merchant.setStatus(status);
+        merchantRepository.save(merchant);
+
+        // In a complete implementation, publish an audit event
+        // and enforce allowed state transitions here.
+
+        return new MerchantResponse(
+                merchant.getMerchantId(),
+                null,
+                null,
+                merchant.getStatus()
+        );
     }
 
-    @PostMapping("/{merchantId}/keys/rotate")
-    public ResponseEntity<ApiResponseDto<Void>> rotateApiKey(
-            @PathVariable String merchantId) {
-        try {
-            merchantService.rotateApiKey(merchantId);
+    @Override
+    @Transactional
+    public void rotateApiKey(String merchantId) {
 
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Merchant API key rotated successfully",
-                            null
-                    )
-            );
+        Merchant merchant = findMerchant(merchantId);
 
-        } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to rotate merchant API key",
-                            null
-                    )
-            );
-        }
+        ApiKey oldKey = apiKeyRepository
+                .findByMerchant_IdAndEnvironment(
+                        merchant.getId(),
+                        Environment.TEST
+                )
+                .stream()
+                .filter(key -> key.getStatus() == ApiKeyStatus.ACTIVE)
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No active TEST API key exists"
+                        ));
+
+        oldKey.setStatus(ApiKeyStatus.REVOKED);
+        oldKey.setRevokedAt(Instant.now());
+
+        ApiKey newKey = new ApiKey();
+        newKey.setMerchant(merchant);
+        newKey.setApiKey(generator.generateApiKey());
+        newKey.setSecretHash(
+                passwordEncoder.encode(generator.generateSecretKey())
+        );
+        newKey.setEnvironment(Environment.TEST);
+        newKey.setStatus(ApiKeyStatus.ACTIVE);
+
+        apiKeyRepository.save(oldKey);
+        apiKeyRepository.save(newKey);
+
+        // This method does not return the new secret.
+        // Add a dedicated rotation response that returns it once.
+    }
+
+    private Merchant findMerchant(String merchantId) {
+
+        return merchantRepository.findByMerchantId(merchantId)
+                .orElseThrow(() ->
+                        new MerchantNotFoundException(merchantId));
     }
 }
-
