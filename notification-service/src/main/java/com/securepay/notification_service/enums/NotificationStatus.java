@@ -1,10 +1,12 @@
+
 package com.securepay.notification_service.enums;
 
 public enum NotificationStatus {
-
-    PENDING,
-
+    CREATED,
+    PROCESSING,
     SENT,
-
-    FAILED
+    DELIVERED,
+    RETRYING,
+    FAILED,
+    CANCELLED
 }

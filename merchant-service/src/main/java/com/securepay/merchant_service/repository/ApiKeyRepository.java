@@ -1,16 +1,24 @@
 package com.securepay.merchant_service.repository;
 
 import com.securepay.merchant_service.entity.ApiKey;
+import com.securepay.merchant_service.entity.Merchant;
+import com.securepay.merchant_service.enums.Environment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
-public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
+public interface ApiKeyRepository
+        extends JpaRepository<ApiKey, String> {
 
-    List<ApiKey> findByMerchantId(Long merchantId);
+    List<ApiKey> findByMerchant_Id(String merchantId);
 
+    Optional<ApiKey> findByApiKey(String apiKey);
 
+    List<ApiKey> findByMerchant_IdAndEnvironment(
+            String merchantId,
+            Environment environment
+    );
 
+    boolean existsByApiKey(String apiKey);
 }

@@ -1,19 +1,20 @@
 package com.securepay.transaction_service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.securepay.transaction_service.enums.TransactionStatus;
+import com.securepay.transaction_service.enums.TransactionType;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
-@Getter
-@AllArgsConstructor
-public class TransactionResponse {
-
-    private String transactionId;
-
-    private String status;
-
-    private BigDecimal amount;
-
-
-}
+public record TransactionResponse(
+        String transactionId,
+        String paymentId,
+        String orderId,
+        BigDecimal amount,
+        String currency,
+        TransactionType transactionType,
+        TransactionStatus status,
+        BigDecimal refundedAmount,
+        Instant createdAt,
+        Instant completedAt
+) {}

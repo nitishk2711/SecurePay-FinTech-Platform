@@ -1,18 +1,25 @@
+
 package com.securepay.settlement_service.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import java.time.LocalDate;
 
-import java.math.BigDecimal;
+public record CreateSettlementRequest(
 
-@Getter
-@Setter
-public class CreateSettlementRequest {
+    @NotBlank
+    String merchantId,
 
-    private String merchantId;
+    @NotNull
+    @PastOrPresent
+    LocalDate periodStart,
 
-    private BigDecimal amount;
+    @NotNull
+    @PastOrPresent
+    LocalDate periodEnd,
 
-    private Integer transactionCount;
+    @NotBlank
+    String currency
 
-}
+) {}
