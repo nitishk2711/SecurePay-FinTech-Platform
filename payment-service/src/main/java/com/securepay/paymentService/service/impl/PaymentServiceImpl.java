@@ -178,10 +178,10 @@ public class PaymentServiceImpl implements PaymentService {
         return new PaymentResponse(
                 payment.getPaymentId(),
                 payment.getOrderId(),
-                payment.getStatus().name(),
-                payment.getAmount(),
-                payment.getCurrency(),
-                payment.getProcessorTransactionId()
+//                payment.getStatus().name(),
+                payment.getAmount()
+//                payment.getCurrency(),
+//                payment.getProcessorTransactionId()
         );
     }
 

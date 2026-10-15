@@ -1,4 +1,3 @@
-```java
 package com.securepay.payment_processor_service.controller;
 
 import com.securepay.payment_processor_service.dto.ApiResponseDto;
@@ -46,4 +45,3 @@ public class ProcessorController {
         }
     }
 }
-```

@@ -1,4 +1,3 @@
-```java
 package com.securepay.order_service.controller;
 
 import com.securepay.order_service.request.CreateOrderRequest;
@@ -68,4 +67,3 @@ public class OrderController {
         }
     }
 }
-```

@@ -16,6 +16,7 @@ public class PaymentProcessorController {
         return new ProcessorResponse(
                 "TXN_" + UUID.randomUUID().toString().substring(0, 8),
                 "SUCCESS",
+                "",
                 "Payment processed successfully"
         );
     }

@@ -1,4 +1,4 @@
-```java
+
 package com.securepay.order_service.service.serviceImpl;
 
 import com.securepay.order_service.component.OrderStateMachine;
@@ -95,4 +95,3 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 }
-```
