@@ -1,6 +1,7 @@
 package com.securepay.notification_service.consumer;
 
 import com.securepay.notification_service.dto.NotificationEvent;
+import com.securepay.notification_service.enums.NotificationType;
 import com.securepay.notification_service.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,7 +17,7 @@ public class PaymentEventConsumer {
     public void consume(String event) {
         NotificationEvent notification = new NotificationEvent();
         notification.setUserId("CUSTOMER");
-        notification.setType("EMAIL");
+        notification.setType(NotificationType.EMAIL);
         notification.setMessage("Payment Completed Successfully");
         service.sendNotification(notification);
     }

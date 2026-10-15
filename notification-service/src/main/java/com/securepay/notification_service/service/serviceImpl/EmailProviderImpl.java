@@ -1,5 +1,5 @@
+package com.securepay.notification_service.service.serviceImpl;
 
-package com.securepay.notification_service.service;
 
 import com.securepay.notification_service.dto.ProviderResponse;
 import com.securepay.notification_service.provider.EmailProvider;
