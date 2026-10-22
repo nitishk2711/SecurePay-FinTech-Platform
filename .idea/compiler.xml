@@ -3,41 +3,14 @@
   <component name="CompilerConfiguration">
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
-      <profile name="Maven default annotation processors profile" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <module name="api-gateway" />
-        <module name="eureka-server" />
-        <module name="auth-service" />
-      </profile>
-      <profile name="Annotation profile for payment-service" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
-        </processorPath>
-        <module name="merchant-service" />
-        <module name="payment-service" />
-      </profile>
-      <profile name="Annotation profile for notification-service" enabled="true">
+      <profile name="Annotation profile for payment-processor-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
         </processorPath>
-        <module name="fraud-service" />
-        <module name="config-server" />
-        <module name="audit-service" />
-        <module name="ledger-service" />
         <module name="payment-processor-service" />
-        <module name="transaction-service" />
-        <module name="settlement-service" />
-        <module name="order-service" />
-        <module name="account-service" />
-        <module name="notification-service" />
       </profile>
     </annotationProcessing>
   </component>

@@ -1,0 +1,173 @@
+
+services:
+  eureka-server:
+    build: ./eureka-server
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+
+  config-server:
+    build: ./config-server
+    ports:
+      - "8888:8888"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  secure-pay-merchant-service:
+    build: ./merchant-service
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8085:8085"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  payment-processor-service:
+    build: ./payment-processor-service
+    ports:
+      - "8086:8086"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  account-service:
+    build: ./account-service
+    ports:
+      - "8087:8087"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  ledger-service:
+    build: ./ledger-service
+    ports:
+      - "8088:8088"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  transaction-service:
+    build: ./transaction-service
+    ports:
+      - "8089:8089"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  settlement-service:
+    build: ./settlement-service
+    ports:
+      - "8090:8090"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  fraud-service:
+    build: ./fraud-service
+    ports:
+      - "8091:8091"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8092:8092"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
+
+  audit-service:
+    build: ./audit-service
+    ports:
+      - "8093:8093"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+    depends_on:
+      - eureka-server
+      - config-server
+    restart: unless-stopped
