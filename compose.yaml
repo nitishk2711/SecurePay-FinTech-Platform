@@ -1,5 +1,94 @@
+x-service-common: &service-common
+  restart: unless-stopped
+  mem_limit: 640m
+  environment: &service-env
+    JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
+    EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "10"
+    EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONINSECONDS: "30"
+    # "optional:" is needed: services without spring-cloud-starter-config crash without it
+    SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
 
 services:
+  # ================= Infrastructure =================
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "user@123"
+    ports:
+      - "3307:3306"   # host access only (avoids clashing with a local MySQL)
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"   # host access only (avoids clashing with a local Postgres)
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27018:27017"   # host access only (avoids clashing with a local MongoDB)
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  kafka:
+    image: apache/kafka:3.9.0
+    restart: unless-stopped
+    ports:
+      - "29092:29092"   # host access only; containers use kafka:9092
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  # ================= Platform =================
   eureka-server:
     build: ./eureka-server
     ports:
@@ -12,162 +101,262 @@ services:
       - "8888:8888"
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
     depends_on:
       - eureka-server
     restart: unless-stopped
 
   api-gateway:
+    <<: *service-common
     build: ./api-gateway
     ports:
       - "8080:8080"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
 
+  # ================= Business services =================
   auth-service:
+    <<: *service-common
     build: ./auth-service
     ports:
       - "8081:8081"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "user@123"
 
   secure-pay-merchant-service:
+    <<: *service-common
     build: ./merchant-service
     ports:
       - "8082:8082"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/merchant_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "user@123"
 
   order-service:
+    <<: *service-common
     build: ./order-service
     ports:
       - "8083:8083"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "user@123"
 
   payment-service:
+    <<: *service-common
     build: ./payment-service
     ports:
       - "8085:8085"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   payment-processor-service:
+    <<: *service-common
     build: ./payment-processor-service
     ports:
       - "8086:8086"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_processor_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "user@123"
 
   account-service:
+    <<: *service-common
     build: ./account-service
     ports:
       - "8087:8087"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/accounts_db
+      SPRING_MONGODB_URI: mongodb://mongo:27017/accounts_db
 
   ledger-service:
+    <<: *service-common
     build: ./ledger-service
     ports:
       - "8088:8088"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   transaction-service:
+    <<: *service-common
     build: ./transaction-service
     ports:
       - "8089:8089"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/transaction_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/transaction_metadata
+      SPRING_MONGODB_URI: mongodb://mongo:27017/transaction_metadata
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   settlement-service:
+    <<: *service-common
     build: ./settlement-service
     ports:
       - "8090:8090"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/settlement_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   fraud-service:
+    <<: *service-common
     build: ./fraud-service
     ports:
       - "8091:8091"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/fraud_db
+      SPRING_MONGODB_URI: mongodb://mongo:27017/fraud_db
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   notification-service:
+    <<: *service-common
     build: ./notification-service
     ports:
       - "8092:8092"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/notification_db
+      SPRING_MONGODB_URI: mongodb://mongo:27017/notification_db
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
   audit-service:
+    <<: *service-common
     build: ./audit-service
     ports:
       - "8093:8093"
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
     depends_on:
-      - eureka-server
-      - config-server
-    restart: unless-stopped
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      <<: *service-env
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/audit_db
+      SPRING_MONGODB_URI: mongodb://mongo:27017/audit_db
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+volumes:
+  mysql-data:
+  postgres-data:
+  mongo-data:
+  kafka-data:
