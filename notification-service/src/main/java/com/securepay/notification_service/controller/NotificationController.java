@@ -22,55 +22,22 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<NotificationResponse>> sendNotification(
-            @Valid @RequestBody NotificationEvent event) {
+    public ResponseEntity<ApiResponseDto<NotificationResponse>> sendNotification(@Valid @RequestBody NotificationEvent event) {
         try {
-            NotificationResponse response =
-                    notificationService.sendNotification(event);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.ACCEPTED.value(),
-                            "Notification accepted successfully",
-                            response
-                    )
-            );
-
+            NotificationResponse response = notificationService.sendNotification(event);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.ACCEPTED.value(), "Notification accepted successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to send notification",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to send notification", null));
         }
     }
 
     @GetMapping("/users/{userId}")
-    public ResponseEntity<ApiResponseDto<Page<NotificationResponse>>> history(
-            @PathVariable String userId,
-            Pageable pageable) {
+    public ResponseEntity<ApiResponseDto<Page<NotificationResponse>>> history(@PathVariable String userId, Pageable pageable) {
         try {
-            Page<NotificationResponse> response =
-                    notificationService.history(userId, pageable);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Success",
-                            response
-                    )
-            );
-
+            Page<NotificationResponse> response = notificationService.history(userId, pageable);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Success", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to retrieve notification history",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve notification history", null));
         }
     }
 }

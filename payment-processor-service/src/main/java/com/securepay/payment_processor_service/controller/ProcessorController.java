@@ -20,28 +20,12 @@ public class ProcessorController {
     private final ProcessorService processorService;
 
     @PostMapping("/payments")
-    public ResponseEntity<ApiResponseDto<ProcessorResponse>> processPayment(
-            @Valid @RequestBody ProcessorRequest request) {
+    public ResponseEntity<ApiResponseDto<ProcessorResponse>> processPayment(@Valid @RequestBody ProcessorRequest request) {
         try {
-            ProcessorResponse response =
-                    processorService.processPayment(request);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Payment processed successfully",
-                            response
-                    )
-            );
-
+            ProcessorResponse response = processorService.processPayment(request);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Payment processed successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Payment processing failed",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Payment processing failed", null));
         }
     }
 }
