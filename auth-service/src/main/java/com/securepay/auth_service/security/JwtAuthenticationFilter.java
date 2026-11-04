@@ -33,14 +33,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain chain)
             throws ServletException, IOException {
+        System.out.println("JWT FILTER REACHED: " + request.getRequestURI());
 
         String header = request.getHeader("Authorization");
+
+        System.out.println("AUTHORIZATION HEADER PRESENT: "
+                + (header != null));
 
         if (header == null || !header.startsWith("Bearer ")) {
             chain.doFilter(request, response);
             return;
         }
-
+        System.out.println("JWT FILTER REACHED: " + request.getRequestURI());
+        System.out.println("AUTHORIZATION HEADER PRESENT: "
+                + (request.getHeader("Authorization") != null));
         try {
             String token = header.substring(7);
             UUID userId = jwtService.extractUserId(token);

@@ -3,6 +3,7 @@ package com.securepay.auth_service.config;
 import com.securepay.auth_service.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,7 +34,6 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow Swagger UI and OpenAPI documentation
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -41,7 +41,12 @@ public class SecurityConfig {
                                 "/v3/api-docs.yaml"
                         ).permitAll()
 
-                        // Public authentication endpoints
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/auth/verify-email"
+                        ).permitAll()
+                        .requestMatchers("/auth/logout").permitAll()
+
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/auth/register",
@@ -52,11 +57,9 @@ public class SecurityConfig {
                                 "/auth/reset-password"
                         ).permitAll()
 
-                        // Admin endpoints
                         .requestMatchers("/admin/**")
                         .hasRole("ADMIN")
 
-                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -64,5 +67,4 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
-
 }

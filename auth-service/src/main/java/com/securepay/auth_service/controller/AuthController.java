@@ -35,14 +35,16 @@ public class AuthController {
             );
 
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Internal Server Error",
-                            null
-                    )
-            );
-        }
+         e.printStackTrace();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ApiResponseDto<>(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        "Internal Server Error",
+                        null
+                )
+        );
+    }
     }
 
     @PostMapping("/login")
@@ -99,6 +101,7 @@ public class AuthController {
     public ResponseEntity<ApiResponseDto<Map<String, String>>> logout(
             @Valid @RequestBody RefreshRequest request) {
         try {
+            System.out.println("========== LOGOUT CONTROLLER REACHED ==========");
             authService.logout(request.refreshToken());
 
             return ResponseEntity.ok(
@@ -176,30 +179,44 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/verify-email")
+    @GetMapping("/verify-email")
     public ResponseEntity<ApiResponseDto<Map<String, String>>> verifyEmail(
             @RequestParam String token) {
+        System.out.println("VERIFY EMAIL ENDPOINT REACHED");
+
         try {
             authService.verifyEmail(token);
 
             return ResponseEntity.ok(
                     new ApiResponseDto<>(
                             HttpStatus.OK.value(),
-                            "Email verified",
+                            "Email verified successfully",
+                            null
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            e.getMessage(),
                             null
                     )
             );
 
         } catch (Exception e) {
-            return ResponseEntity.ok(
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ApiResponseDto<>(
-                            HttpStatus.BAD_REQUEST.value(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
                             "Email verification failed",
                             null
                     )
             );
         }
     }
+
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponseDto<Map<String, String>>> forgotPassword(

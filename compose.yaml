@@ -18,7 +18,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "user@123"
     ports:
-      - "3307:3306"   # host access only (avoids clashing with a local MySQL)
+      - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d
@@ -51,7 +51,7 @@ services:
     image: mongo:7
     restart: unless-stopped
     ports:
-      - "27018:27017"   # host access only (avoids clashing with a local MongoDB)
+      - "27019:27017"   # host access only (avoids clashing with a local MongoDB)
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -118,6 +118,7 @@ services:
         condition: service_started
 
   # ================= Business services =================
+
   auth-service:
     <<: *service-common
     build: ./auth-service
@@ -132,9 +133,13 @@ services:
         condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/auth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_APP_PASSWORD: ${MAIL_APP_PASSWORD}
+      VERIFICATION_BASE_URL: ${VERIFICATION_BASE_URL:-http://localhost:8080}
+      TEST_EMAIL: ${TEST_EMAIL}
 
   secure-pay-merchant-service:
     <<: *service-common
@@ -150,7 +155,7 @@ services:
         condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/merchant_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/merchant_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
 
