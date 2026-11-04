@@ -5,6 +5,7 @@ import com.securepay.auth_service.entity.*;
 import com.securepay.auth_service.repository.*;
 import com.securepay.auth_service.security.JwtService;
 import com.securepay.auth_service.service.AuthService;
+import com.securepay.auth_service.service.EmailService;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
 
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -32,6 +34,11 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final EmailService emailService;
+
+    @Value("${securepay.email.verification-expiry-minutes:1440}")
+    private long verificationExpiryMinutes;
 
     @Value("${securepay.jwt.refresh-token-days:7}")
     private long refreshTokenDays;
@@ -74,6 +81,24 @@ public class AuthServiceImpl implements AuthService {
 
         // TODO: Generate and persist a hashed, expiring email
         // verification token; publish a notification event.
+        String rawToken = generateOpaqueToken();
+
+        EmailVerificationToken verificationToken =
+                new EmailVerificationToken();
+
+        verificationToken.setUser(user);
+        verificationToken.setTokenHash(sha256(rawToken));
+        verificationToken.setExpiresAt(
+                Instant.now().plusSeconds(verificationExpiryMinutes * 60)
+        );
+
+        emailVerificationTokenRepository.save(verificationToken);
+
+        emailService.sendVerificationEmail(
+                email,
+                username,
+                rawToken
+        );
     }
 
     @Override
@@ -332,9 +357,48 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void verifyEmail(String token) {
-        throw new UnsupportedOperationException(
-                "Implement with a persisted EmailVerificationToken");
+        System.out.println("VERIFY EMAIL: method called");
+
+        if (token == null || token.isBlank()) {
+            System.out.println("VERIFY EMAIL: token is missing");
+            throw new IllegalArgumentException("Verification token is required");
+        }
+
+        String tokenHash = sha256(token);
+        System.out.println("VERIFY EMAIL: token hashed");
+
+        EmailVerificationToken verificationToken =
+                emailVerificationTokenRepository.findByTokenHash(tokenHash)
+                        .orElseThrow(() -> {
+                            System.out.println("VERIFY EMAIL: token not found");
+                            return new IllegalArgumentException(
+                                    "Invalid verification token");
+                        });
+
+        System.out.println("VERIFY EMAIL: token found");
+
+        if (verificationToken.getUsedAt() != null) {
+            throw new IllegalArgumentException(
+                    "Verification token has already been used");
+        }
+
+        if (!verificationToken.getExpiresAt().isAfter(Instant.now())) {
+            throw new IllegalArgumentException(
+                    "Verification token has expired");
+        }
+
+        User user = verificationToken.getUser();
+
+        user.setEmailVerified(true);
+        user.setStatus(UserStatus.ACTIVE);
+        verificationToken.setUsedAt(Instant.now());
+
+        userRepository.save(user);
+        emailVerificationTokenRepository.save(verificationToken);
+
+        System.out.println("VERIFY EMAIL: user verified successfully");
     }
 
     @Override

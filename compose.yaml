@@ -1,8 +1,6 @@
 x-service-common: &service-common
   restart: unless-stopped
   mem_limit: 640m
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
   environment: &service-env
     JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
     EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -14,8 +12,22 @@ x-service-common: &service-common
 
 services:
   # ================= Infrastructure =================
-  # NOTE: MySQL container removed. MySQL-based services use the LOCAL MySQL
-  # on the host via host.docker.internal:3306
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "user@123"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   postgres:
     image: postgres:16
@@ -39,7 +51,7 @@ services:
     image: mongo:7
     restart: unless-stopped
     ports:
-      - "27018:27017"   # host access only (avoids clashing with a local MongoDB)
+      - "27019:27017"   # host access only (avoids clashing with a local MongoDB)
     volumes:
       - mongo-data:/data/db
     healthcheck:
@@ -106,6 +118,7 @@ services:
         condition: service_started
 
   # ================= Business services =================
+
   auth-service:
     <<: *service-common
     build: ./auth-service
@@ -116,11 +129,17 @@ services:
         condition: service_started
       config-server:
         condition: service_started
+      mysql:
+        condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/auth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/auth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_APP_PASSWORD: ${MAIL_APP_PASSWORD}
+      VERIFICATION_BASE_URL: ${VERIFICATION_BASE_URL:-http://localhost:8080}
+      TEST_EMAIL: ${TEST_EMAIL}
 
   secure-pay-merchant-service:
     <<: *service-common
@@ -132,9 +151,11 @@ services:
         condition: service_started
       config-server:
         condition: service_started
+      mysql:
+        condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/merchant_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/merchant_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
 
@@ -148,9 +169,11 @@ services:
         condition: service_started
       config-server:
         condition: service_started
+      mysql:
+        condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/order_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/order_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
 
@@ -185,9 +208,11 @@ services:
         condition: service_started
       config-server:
         condition: service_started
+      mysql:
+        condition: service_healthy
     environment:
       <<: *service-env
-      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/payment_processor_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_processor_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "user@123"
 
@@ -336,6 +361,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
 volumes:
+  mysql-data:
   postgres-data:
   mongo-data:
   kafka-data:
