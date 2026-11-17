@@ -27,7 +27,13 @@ public interface AuthService {
 
     void forgotPassword(String email);
 
-    void resetPassword(String token, String newPassword);
+    String verifyResetOtp(String email, String otp);
+
+    void resetPassword(
+            String token,
+            String newPassword,
+            String confirmPassword
+    );
 
     UUID getCurrentUserId(String email);
 }

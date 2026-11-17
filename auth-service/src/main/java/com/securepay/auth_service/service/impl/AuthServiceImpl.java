@@ -2,6 +2,7 @@ package com.securepay.auth_service.service.impl;
 
 import com.securepay.auth_service.dto.*;
 import com.securepay.auth_service.entity.*;
+import com.securepay.auth_service.entity.PasswordResetToken;
 import com.securepay.auth_service.repository.*;
 import com.securepay.auth_service.security.JwtService;
 import com.securepay.auth_service.service.AuthService;
@@ -20,7 +21,9 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
-
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import io.jsonwebtoken.Claims;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final EmailService emailService;
-
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     @Value("${securepay.email.verification-expiry-minutes:1440}")
     private long verificationExpiryMinutes;
 
@@ -44,6 +47,12 @@ public class AuthServiceImpl implements AuthService {
     private long refreshTokenDays;
 
     private final SecureRandom secureRandom = new SecureRandom();
+
+    @Value("${securepay.password-reset.otp-expiry-minutes:5}")
+    private long otpExpiryMinutes;
+
+    @Value("${securepay.password-reset.token-expiry-minutes:10}")
+    private long resetTokenExpiryMinutes;
 
     @Override
     @Transactional
@@ -402,14 +411,158 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void forgotPassword(String email) {
-        // Implement a non-enumerating response, hashed reset token,
-        // expiration, and notification delivery.
+
+        String normalizedEmail = normalizeEmail(email);
+
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+
+        if (user == null || !user.isEmailVerified()
+                || user.getStatus() != UserStatus.ACTIVE) {
+            return;
+        }
+
+        passwordResetTokenRepository
+                .findTopByEmailAndUsedFalseOrderByIdDesc(normalizedEmail)
+                .ifPresent(existing -> {
+                    existing.setUsed(true);
+                    passwordResetTokenRepository.save(existing);
+                });
+
+        String otp = String.format("%06d",
+                secureRandom.nextInt(1_000_000));
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setEmail(normalizedEmail);
+        resetToken.setOtpHash(passwordEncoder.encode(otp));
+        resetToken.setExpiryDate(
+                LocalDateTime.now(ZoneOffset.UTC)
+                        .plusMinutes(otpExpiryMinutes)
+        );
+        resetToken.setAttempts(0);
+        resetToken.setVerified(false);
+        resetToken.setUsed(false);
+
+        passwordResetTokenRepository.save(resetToken);
+
+        emailService.sendPasswordResetOtp(
+                normalizedEmail,
+                user.getUsername(),
+                otp
+        );
     }
 
+
     @Override
-    public void resetPassword(String token, String newPassword) {
-        throw new UnsupportedOperationException(
-                "Implement with a persisted PasswordResetToken");
+    @Transactional(noRollbackFor = IllegalArgumentException.class)
+    public void resetPassword(
+            String token,
+            String newPassword,
+            String confirmPassword) {
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Passwords do not match");
+        }
+
+        PasswordResetToken resetToken = passwordResetTokenRepository
+                .findByResetTokenHashAndUsedFalse(sha256(token))
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Invalid reset token"));
+
+        if (!resetToken.isVerified()) {
+            throw new IllegalArgumentException("OTP verification required");
+        }
+
+        if (!resetToken.getExpiryDate().isAfter(
+                LocalDateTime.now(ZoneOffset.UTC))) {
+
+            resetToken.setUsed(true);
+            throw new IllegalArgumentException("Reset token expired");
+        }
+
+        User user = userRepository.findByEmail(resetToken.getEmail())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Invalid reset request"));
+
+        if (!user.isEmailVerified()
+                || user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException("Account is not active");
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException(
+                    "New password must differ from current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordChangedAt(Instant.now());
+
+        refreshTokenRepository
+                .findAllByUserIdAndRevokedFalse(user.getId())
+                .forEach(refreshToken -> refreshToken.setRevoked(true));
+
+        resetToken.setUsed(true);
+
+        userRepository.save(user);
+        passwordResetTokenRepository.save(resetToken);
+    }
+    @Override
+    @Transactional(noRollbackFor = IllegalArgumentException.class)
+    public String verifyResetOtp(String email, String otp) {
+
+        String normalizedEmail = normalizeEmail(email);
+
+        PasswordResetToken resetToken = passwordResetTokenRepository
+                .findTopByEmailAndUsedFalseOrderByIdDesc(normalizedEmail)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Invalid or expired OTP"));
+
+        if (resetToken.isVerified()) {
+            throw new IllegalArgumentException("OTP has already been verified");
+        }
+
+        if (!resetToken.getExpiryDate().isAfter(
+                LocalDateTime.now(ZoneOffset.UTC))) {
+
+            resetToken.setUsed(true);
+            passwordResetTokenRepository.save(resetToken);
+
+            throw new IllegalArgumentException("OTP has expired");
+        }
+
+        if (resetToken.getAttempts() >= 5) {
+
+            resetToken.setUsed(true);
+            passwordResetTokenRepository.save(resetToken);
+
+            throw new IllegalArgumentException("Maximum OTP attempts exceeded");
+        }
+
+        if (!passwordEncoder.matches(otp, resetToken.getOtpHash())) {
+
+            resetToken.setAttempts(resetToken.getAttempts() + 1);
+
+            if (resetToken.getAttempts() >= 5) {
+                resetToken.setUsed(true);
+            }
+
+            passwordResetTokenRepository.save(resetToken);
+
+            throw new IllegalArgumentException("Invalid OTP");
+        }
+
+        String rawResetToken = generateOpaqueToken();
+
+        resetToken.setVerified(true);
+        resetToken.setResetTokenHash(sha256(rawResetToken));
+        resetToken.setExpiryDate(
+                LocalDateTime.now(ZoneOffset.UTC)
+                        .plusMinutes(resetTokenExpiryMinutes)
+        );
+
+        passwordResetTokenRepository.save(resetToken);
+
+        return rawResetToken;
     }
 }
