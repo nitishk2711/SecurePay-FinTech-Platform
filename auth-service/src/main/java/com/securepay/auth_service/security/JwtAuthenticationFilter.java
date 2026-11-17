@@ -28,6 +28,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getServletPath();
+
+        System.out.println("JWT FILTER CHECK PATH: " + path);
+
+        boolean skip = path.equals("/auth/logout");
+
+        System.out.println("JWT FILTER SKIPPED: " + skip);
+
+        return skip;
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -41,7 +55,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 + (header != null));
 
         if (header == null || !header.startsWith("Bearer ")) {
+            System.out.println("JWT FILTER: PASSING REQUEST TO NEXT FILTER");
+
             chain.doFilter(request, response);
+            System.out.println("JWT FILTER: RESPONSE STATUS = "
+                    + response.getStatus());
             return;
         }
         System.out.println("JWT FILTER REACHED: " + request.getRequestURI());

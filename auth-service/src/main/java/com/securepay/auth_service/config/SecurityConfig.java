@@ -45,15 +45,15 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/auth/verify-email"
                         ).permitAll()
-                        .requestMatchers("/auth/logout").permitAll()
-
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/auth/register",
                                 "/auth/login",
                                 "/auth/refresh",
+                                "/auth/logout",
                                 "/auth/verify-email",
                                 "/auth/forgot-password",
+                                "/auth/verify-reset-otp",
                                 "/auth/reset-password"
                         ).permitAll()
 
@@ -66,5 +66,17 @@ public class SecurityConfig {
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter>
+    jwtAuthenticationFilterRegistration(
+            JwtAuthenticationFilter filter) {
+
+        FilterRegistrationBean<JwtAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+
+        registration.setEnabled(false);
+
+        return registration;
     }
 }

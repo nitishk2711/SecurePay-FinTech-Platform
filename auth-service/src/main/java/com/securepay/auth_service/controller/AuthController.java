@@ -216,13 +216,12 @@ public class AuthController {
             );
         }
     }
-
-
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponseDto<Map<String, String>>> forgotPassword(
-            @RequestParam String email) {
+            @Valid @RequestBody ForgotPasswordRequest request) {
+
         try {
-            authService.forgotPassword(email);
+            authService.forgotPassword(request.getEmail());
 
             return ResponseEntity.ok(
                     new ApiResponseDto<>(
@@ -233,7 +232,8 @@ public class AuthController {
             );
 
         } catch (Exception e) {
-            // Avoid revealing whether an email exists.
+            e.printStackTrace();
+
             return ResponseEntity.ok(
                     new ApiResponseDto<>(
                             HttpStatus.OK.value(),
@@ -243,31 +243,86 @@ public class AuthController {
             );
         }
     }
-
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponseDto<Map<String, String>>> resetPassword(
-            @RequestParam String token,
-            @RequestParam String newPassword) {
+            @Valid @RequestBody PasswordResetRequest request) {
+
         try {
-            authService.resetPassword(token, newPassword);
+            authService.resetPassword(
+                    request.getToken(),
+                    request.getNewPassword(),
+                    request.getConfirmPassword()
+            );
 
             return ResponseEntity.ok(
                     new ApiResponseDto<>(
                             HttpStatus.OK.value(),
-                            "Password reset",
+                            "Password reset successfully",
+                            null
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            e.getMessage(),
                             null
                     )
             );
 
         } catch (Exception e) {
-            return ResponseEntity.ok(
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     new ApiResponseDto<>(
-                            HttpStatus.BAD_REQUEST.value(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
                             "Password reset failed",
                             null
                     )
             );
         }
     }
+
+        @PostMapping("/verify-reset-otp")
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> verifyResetOtp(
+            @Valid @RequestBody VerifyResetOtpRequest request) {
+
+        try {
+            String resetToken = authService.verifyResetOtp(
+                    request.getEmail(),
+                    request.getOtp()
+            );
+
+            return ResponseEntity.ok(
+                    new ApiResponseDto<>(
+                            HttpStatus.OK.value(),
+                            "OTP verified successfully",
+                            Map.of("resetToken", resetToken)
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    new ApiResponseDto<>(
+                            HttpStatus.BAD_REQUEST.value(),
+                            e.getMessage(),
+                            null
+                    )
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new ApiResponseDto<>(
+                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                            "OTP verification failed",
+                            null
+                    )
+            );
+        }
+    }
+
 }
 
