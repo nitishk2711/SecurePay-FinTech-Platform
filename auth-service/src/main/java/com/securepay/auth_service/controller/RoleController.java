@@ -1,4 +1,3 @@
-
 package com.securepay.auth_service.controller;
 
 import com.securepay.auth_service.dto.ApiResponseDto;
@@ -23,27 +22,12 @@ public class RoleController {
     private final AuthService authService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<Map<String, String>>> createRole(
-            @Valid @RequestBody Role role) {
+    public ResponseEntity<ApiResponseDto<Map<String, String>>> createRole(@Valid @RequestBody Role role) {
         try {
             authService.createRole(role);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Role created",
-                            null
-                    )
-            );
-
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Role created", null));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to create role",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to create role", null));
         }
     }
 

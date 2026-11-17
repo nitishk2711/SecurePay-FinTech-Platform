@@ -23,106 +23,42 @@ public class SettlementController {
     private final SettlementService settlementService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<SettlementResponse>> createSettlement(
-            @Valid @RequestBody CreateSettlementRequest request) {
+    public ResponseEntity<ApiResponseDto<SettlementResponse>> createSettlement(@Valid @RequestBody CreateSettlementRequest request) {
         try {
-            SettlementResponse response =
-                    settlementService.createSettlement(request);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.CREATED.value(),
-                            "Settlement created successfully",
-                            response
-                    )
-            );
-
+            SettlementResponse response = settlementService.createSettlement(request);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.CREATED.value(), "Settlement created successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to create settlement",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to create settlement", null));
         }
     }
 
     @PostMapping("/{settlementId}/process")
-    public ResponseEntity<ApiResponseDto<SettlementResponse>> processSettlement(
-            @PathVariable String settlementId) {
+    public ResponseEntity<ApiResponseDto<SettlementResponse>> processSettlement(@PathVariable String settlementId) {
         try {
-            SettlementResponse response =
-                    settlementService.processSettlement(settlementId);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Settlement processed successfully",
-                            response
-                    )
-            );
-
+            SettlementResponse response = settlementService.processSettlement(settlementId);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Settlement processed successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to process settlement",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to process settlement", null));
         }
     }
 
     @GetMapping("/{settlementId}")
-    public ResponseEntity<ApiResponseDto<SettlementResponse>> getSettlement(
-            @PathVariable String settlementId) {
+    public ResponseEntity<ApiResponseDto<SettlementResponse>> getSettlement(@PathVariable String settlementId) {
         try {
-            SettlementResponse response =
-                    settlementService.getSettlement(settlementId);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Success",
-                            response
-                    )
-            );
-
+            SettlementResponse response = settlementService.getSettlement(settlementId);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Success", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to retrieve settlement",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve settlement", null));
         }
     }
 
     @GetMapping("/merchant/{merchantId}")
-    public ResponseEntity<ApiResponseDto<List<Settlement>>> getMerchantSettlements(
-            @PathVariable String merchantId) {
+    public ResponseEntity<ApiResponseDto<List<Settlement>>> getMerchantSettlements(@PathVariable String merchantId) {
         try {
-            List<Settlement> response =
-                    settlementService.getMerchantSettlements(merchantId);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Success",
-                            response
-                    )
-            );
-
+            List<Settlement> response = settlementService.getMerchantSettlements(merchantId);
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Success", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to retrieve merchant settlements",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve merchant settlements", null));
         }
     }
 }

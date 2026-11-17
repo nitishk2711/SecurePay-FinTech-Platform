@@ -18,27 +18,13 @@ public class AccountController {
     public ResponseEntity<ApiResponseDto<Account>> withdraw(@PathVariable String id, @RequestBody Double amount) {
         try {
             Account account = accountService.withdrawal(id, amount);
-            ApiResponseDto<Account> response = new ApiResponseDto<>(
-                    200,
-                    "Withdrawal Successfull",
-                    account
-            );
+            ApiResponseDto<Account> response = new ApiResponseDto<>(200, "Withdrawal Successfull", account);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            ApiResponseDto<Account> response = new ApiResponseDto<>(
-                    401,
-                    e.getMessage(),
-                    null
-            );
+            ApiResponseDto<Account> response = new ApiResponseDto<>(401, e.getMessage(), null);
             return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDto<>(
-                                    500,
-                                    e.getMessage(),
-                                    null
-                            )
-                    );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponseDto<>(500, e.getMessage(), null));
         }
     }
 

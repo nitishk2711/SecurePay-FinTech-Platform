@@ -18,52 +18,22 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<ApiResponseDto<OrderResponse>> createOrder(
-            @Valid @RequestBody CreateOrderRequest request) {
+    public ResponseEntity<ApiResponseDto<OrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         try {
             OrderResponse response = orderService.createOrder(request);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.CREATED.value(),
-                            "Order created successfully",
-                            response
-                    )
-            );
-
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.CREATED.value(), "Order created successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to create order",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to create order", null));
         }
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<ApiResponseDto<OrderResponse>> getOrder(
-            @PathVariable String orderId) {
+    public ResponseEntity<ApiResponseDto<OrderResponse>> getOrder(@PathVariable String orderId) {
         try {
             OrderResponse response = orderService.getOrder(orderId);
-
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.OK.value(),
-                            "Success",
-                            response
-                    )
-            );
-
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.OK.value(), "Success", response));
         } catch (Exception e) {
-            return ResponseEntity.ok(
-                    new ApiResponseDto<>(
-                            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                            "Failed to retrieve order",
-                            null
-                    )
-            );
+            return ResponseEntity.ok(new ApiResponseDto<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to retrieve order", null));
         }
     }
 }
